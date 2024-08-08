@@ -14,6 +14,9 @@
   "author": "utkarsh updy",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",   
+    "prettier": "^3.3.3"
   }
 }
+
+
