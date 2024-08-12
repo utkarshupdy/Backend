@@ -13,4 +13,5 @@ const connectDB = async () =>{
         
     }
 }
+// this is the long fxn used whenever we try to talk with databse , its best to create a utility fxn nd pass it whenvwer we try to talk to databse , rather than writing this long fxn all the time 
 export default connectDB
