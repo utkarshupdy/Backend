@@ -3,7 +3,7 @@ class ApiError extends Error{  // this apierror (error) class is provided by nod
         statusCode,
         message="Something went wrong",
         errors = [],
-        statck = ""
+        stack = ""
          
     ){ // these all below statements r overriding 
         super(message)
@@ -13,8 +13,8 @@ class ApiError extends Error{  // this apierror (error) class is provided by nod
         this.success = false;
         this.errors = errors
 
-        if(statck){
-            this.stack = statck
+        if(stack){
+            this.stack = stack
         } else{
             Error.captureStackTrace(this , this.constructor)
         }

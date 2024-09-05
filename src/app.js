@@ -23,4 +23,14 @@ app.use(express.static("public")) // if we want to store something in over serve
 app.use(cookieParser())
 
 
+ //***********************************ROUTES***********************************
+ import userRouter from './routes/user.routes.js' // as user.routers.js export default a fxn , its doesn't matter what name u gove to that fxn here
+
+ // routes decleration
+ // to apply routes , use middleware here
+//  app.use("/users" , userRouter /* which router i want to activate at /user , whenever i type /user , middleware gives control to userrouter */)
+ app.use("/api/v1/users" , userRouter)
+ // http://localhost:8000/api/v1/users/register    "THIS IS HOW URL IS MADE" now no changes in app.js , if we want login , go to userrouter nd add login route
+
+
 export {app} // this is also a way to export
