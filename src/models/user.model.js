@@ -52,7 +52,7 @@ userSchema.pre("save" , async function (next) { // pre is a kind of hook provide
     // if(!this.isModified("password"))return next();
     // one more method
     if(this.isModified("password")){
-        this.password = bcrypt.hash(this.password , 10 /*rounds in int 8 , 10 ...etc */)
+        this.password = await bcrypt.hash(this.password , 10 /*rounds in int 8 , 10 ...etc */)
         next()
     }
     
