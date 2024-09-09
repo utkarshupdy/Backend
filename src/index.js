@@ -2,7 +2,7 @@
 import dotenv from 'dotenv'
 import { app } from './app.js';
 dotenv.config({         // as this feature is experimental , to use this , we have to add some code in package.json at scripts-->dev line
-    path: './env'
+    path: './.env'
 })
 
 

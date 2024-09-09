@@ -29,7 +29,7 @@ const userSchema = new Schema({
         type: String, // cloudinary service stores files and store its url in this
         required: true,
     },
-    coverimage:{
+    coverImage:{
         type: String,
     },
     watchHistory:[

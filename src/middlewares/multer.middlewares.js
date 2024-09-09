@@ -9,7 +9,7 @@ const storage = multer.diskStorage({
     filename: function(req , file , cb){
         // const uniqueSuffix = Date.now()+'-'+Math.round(Math.random()*1E9)
         // cb(null, file.fieldname + '-' + uniqueSuffix)
-        cb(null, file.originalname)//although its not good practise becoz if there r 5 files exist with original name , they r override , to these files r in server for very small time , we neglect it
+        cb(null, file.originalname)//although using .originalname its not good practise becoz if there r 5 files exist with original name , they r override , to these files r in server for very small time , we neglect it
     }
 })
 export const upload = multer({

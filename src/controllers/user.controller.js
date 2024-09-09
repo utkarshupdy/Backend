@@ -38,16 +38,23 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // User.findOne({email}) // this is correct but one more method 
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{ username }, { email }]   // checks if any of the element i.e. username or email matches , it throws error
     })
     if (existedUser) {
         throw new ApiError(409, "user with email nd username already exist")
     }
 
+    // console.log(req.files)
+
     // multer gives access to files same as express give accress to body
     const avatarLocalPath = req.files?.avatar[0]?.path   // console log once to check if everything works fine
-    const coverImageLocalPath = req.files?.coverImage[0].path;
+    // const coverImageLocalPath = req.files?.coverImage[0].path;
+
+    let coverImageLocalPath ;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+        coverImageLocalPath = req.files.coverImage[0].path
+    }
 
     if (!avatarLocalPath) throw new ApiError(400, "Avatar file is required")
 
