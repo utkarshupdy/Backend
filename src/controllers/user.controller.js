@@ -1,8 +1,9 @@
 import { asyncHandler } from "../utils/async-Handler.js"
-import { ApiError } from "../utils/apiError.js";
+import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js"  // to check if user exist or not
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken"
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -184,19 +185,72 @@ const logoutUser = asyncHandler(async (req, res) => {
     )
 
     const options = {
-        httpOnly:true,
+        httpOnly: true,
         secure: true
     }
     return res
-    .status(200)
-    .clearCookie("accessToken" , options)
-    .clearCookie("refreshToken" , options)
-    .json(new ApiResponse(200 , {} , "User logged out successfully"))
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(200, {}, "User logged out successfully"))
+
+})
+
+// now we have to create a endpoint  controller to refresh user token whenever its access token expires ........
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    // now first of all to refresh the user token , we have to send refresh token of user stored in db , whuch comes from cookies
+    const incommingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+    if (!incommingRefreshToken) {
+        throw new ApiError(401, "Unauthorized Request")
+    }
+    try {
+        //see the token which is with user is in encrypted form , so to verify with token stored in db  , we have to first decode the user token , so that we get the id of user  , for which we have to use jwt .verify fxn which takes paramters like refresh token secret key (to authenticate ) nd encoded user toen nd send decoded user token
+        const decodedToken = jwt.verify(incommingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+
+        //while created refresh token , we have given user id to the generate refrsh token , so if we have decoded refresh token, we can get user id from that nd search for token stored by user in db via user id
+        const user = await User.findById(decodedToken?._id)
+
+        if (!user) {
+            throw new ApiError(401, "Invalid Refresh Token")
+        }
+
+        if (incommingRefreshToken !== user?.refreshToken) {
+            throw new ApiError(401, "Refresh Token is expired or used")
+        }
+
+        const options = {
+            httpOnly: true,
+            secure: true
+        }
+
+        const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id)
+
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", newRefreshToken, options)
+            .json(
+                new ApiResponse(
+                    200,
+                    { accessToken, refreshToken: newRefreshToken },
+                    "Access token refreshed"
+                )
+            )
+    } catch (error) {
+        throw new ApiError(401 , error?.message || "Invalid Refresh Token")
+
+    }
+
+
+
+
 
 })
 
 export {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    refreshAccessToken
 }

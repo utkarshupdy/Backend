@@ -2,6 +2,7 @@ import mongoose , { Schema}from 'mongoose'
 // brypt simply help in hash ur password , so that its not leak when db made public
 import jwt from "jsonwebtoken"; // basically whoever give them a token , it allows to take access of all data
 import bcrypt from "bcrypt"
+// import .env
 
 const userSchema = new Schema({
     username:{
@@ -62,8 +63,8 @@ userSchema.pre("save" , async function (next) { // pre is a kind of hook provide
 userSchema.methods.isPasswordCorrect = async function(password){
     return await bcrypt.compare(password/*user gives password */ , this.password/*encrypted password stored in db */)
 }
-userSchema.methods.generateAccessToken = function(){ // method to generate tokens 
-    jwt.sign(
+userSchema.methods.generateAccessToken  = function(){ // method to generate tokens 
+    return jwt.sign(
         {
             _id: this._id,
             email : this.email,
@@ -79,7 +80,7 @@ userSchema.methods.generateAccessToken = function(){ // method to generate token
     )
 } // both r jwt tokens
 userSchema.methods.generateRefeshToken = function(){ // inrefresh token , there is less info , becouse it refresh frequently
-    jwt.sign(
+    return jwt.sign(
         {
             _id: this._id,
         },

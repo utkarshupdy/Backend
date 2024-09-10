@@ -1,7 +1,8 @@
-import { ApiError } from "../utils/apiError";
-import { asyncHandler } from "../utils/async-Handler";
+import { ApiError } from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/async-Handler.js";
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.model";
+import { User } from "../models/user.model.js";
+// import cookieParser from "cookie-parser";
 
 
 // middleware have 4 types request , response , cb , next (function of next is to surpass the code further after performing middleware task)
@@ -10,7 +11,7 @@ export const verifyJWT = asyncHandler(async(req , res ,next)=>{ // here res has 
 
   try {
       /*****************************************************************************************************MIGHT HAVE ERROR IN COOKIE OR COOKIES */
-     const token =   req.cookie?.accessToken || req.header("Authorization")?.replace("Bearer ","") // as ion postman , there is bearer access token , but we want only access token so rplace another thing with epty string
+     const token =   req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","") // as ion postman , there is bearer access token , but we want only access token so rplace another thing with epty string
       // we can send tokens via postmen also  header--> type "Authorization" in  key and "Bearer - access token name" in value .... bearer is important keyword refer by jwt 
       if(!token){
           throw new ApiError(401 , "Unauthorized request")
