@@ -20,7 +20,8 @@ app.use(express.urlencoded({/*inside we have to gives options , althrough this i
     limit:"16kb"
 }))
 app.use(express.static("public")) // if we want to store something in over server like assest , images , we can staore it in folder named "public" in my code using this package static of express
-app.use(cookieParser())
+
+app.use(cookieParser()) // via cookie parser , we give access of all cookies to request and response of all middlewares nd all
 
 
  //***********************************ROUTES***********************************
