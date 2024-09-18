@@ -270,7 +270,10 @@ const changeCurrentPassword = asyncHandler(async(req , res)=>{
 const getCurrentUser = asyncHandler(async(req , res)=>{
     return res
     .status(200)
-    .json(200 , req.user , "Current user fetched successfully") // json response is like that {status code , data want to send , message}
+    .json(
+        new ApiResponse(200 , req.user , "Current user fetched successfully")
+
+    ) // json response is like that {status code , data want to send , message}
 })
 
 const updateAccountDetails = asyncHandler(async(req , res)=>{
@@ -301,7 +304,7 @@ const updateUserAvatar = asyncHandler(async(req , res)=>{
     if(!avatarLocalPath){
         throw new ApiError(400 , "Avatar file is missing")
     }
-
+//TODO: AFTER UPDATING THE NEW AVATAR , DELETE THE OLD AVATAR IMAGE FROM CLOUDINARY ,, TAKE CLOUDNIARY URL , CREATE A UTILITY FXN TO DELETE THE AVATAR FROM CLOUDINARY
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     if(!avatar.url){
         throw new ApiError(400 , "Error while uploading Avatar")
@@ -323,6 +326,8 @@ const updateUserAvatar = asyncHandler(async(req , res)=>{
         new ApiResponse(200 , user , "Avatar updated successfully")
     )
 })
+
+
 const updateUserCoverImage = asyncHandler(async(req , res)=>{
     const coverImageLocalPath = req.file?.path
     if(!coverImageLocalPath){
@@ -350,6 +355,92 @@ const updateUserCoverImage = asyncHandler(async(req , res)=>{
         new ApiResponse(200 , user , "Cover Image updated successfully")
     )
 })
+//MONGO DB AGGREGATION PIPELINE
+const getUserChannelProfile = asyncHandler(async(req , res)=>{
+    const {username} = req.params
+
+    if(!username?.trim()){
+        throw new ApiError(400 , "Username is missing")
+    }
+
+    // User.find({username}) // {} = where clause // this is ok that u find a user from username in database , then by user's id , u put some aggregation pipeline ... its ok .. but there is as such no need of it ... there is match feild in mongodevi aggregation pipelile , which do a work of finding the user from database then perform action on it ... so we can directly do that...
+
+    // User.aggregate([ ]) // aggregate is a method , which takes a array , in which {} , {} , {} are pipelines nd it gives an arrays
+    const channel = await User.aggregate([
+        {
+            $match:{                              // now u have one document or one user , now u have to find subscriber of that user
+                username : username?.toLowerCase()
+            }
+        },
+        {  // lookup for finding subscribers of that channel
+            $lookup:{
+                from: "subscriptions", // actually its Subscription , but in mongo db , every model name is converted to lower case nd in pural so ....
+                localField: "_id",
+                foreignField:"channel",  // for getting subscribers ... select channels from subscription model document nd count no. of users in it
+                as: "subscribers"
+            }
+        },
+        {  // lookup for finding channels that the particular user subscribed
+            $lookup:{
+                from: "subscriptions", // actually its Subscription , but in mongo db , every model name is converted to lower case nd in pural so ....
+                localField: "_id",
+                foreignField:"subscriber",  // for getting subscribed channels by particular user ... select subscribers from subscription model document nd count no. of channels in it
+                as: "subscribedTo"
+
+            }
+        },
+        {   // we need one more pipelines "addto" which retains the normal given feilds , but also add some more feilds to it 
+            $addFields:{
+                subscribersCount: {
+                    // we want to calculate/count all documents , we have a fxn called "size"
+                    $size : "$subscribers"  // from where u have to calculate / count the size of document , also user $ as now its become a feild
+
+                },
+                channelsSubscribedToCount :{
+                    $size : "$subscribedTo"
+                },
+                isSubscribed :{  // to calculate wheather user subscribed the channel or not , we need a fxn called "cond" or condition which takes 3 parameter {if , then , else}
+                    $cond :{
+                        if:{$in : [req.user?._id , "$subscribers.subscriber" /* as subscribers is a feild , we can goes into the feild nd search for particular subscriber */]} , // we just have to check , if that partucular user is in the "subscribers " documents comes from subscribtion model , for whch we can use "in" fxn which calculate / check in array and object both
+                        then: true, // is subscribed == true
+                        else : false // is subscribed == false
+
+                    }
+                }
+            }
+        },
+        {   // niw we also have to use one more pipeline "project" which means , we dont have to give all the details of user to the frontend ... we have to give selected feilds of user .. for which we can use project 
+            $project:{ // to use this , just put 1 in all those feilds , which u want to show case on frontend .. simple
+                fullName : 1,
+                username : 1,
+                subscribersCount : 1,
+                channelsSubscribedToCount : 1,
+                isSubscribed : 1,
+                avatar : 1,
+                coverImage : 1,
+                email : 1,
+                 
+
+
+
+
+            }
+        }
+
+    ])
+    // this const channel gives a array of object , in our case , we only matched one user ... thats why only 1 object/ output aray is returned
+
+    if(!channel?.length){
+        throw new ApiError(404 , "Channel does not exist")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200 , channel[0] , "User Channel fetched successfully")
+    )
+
+})
 
 export {
     registerUser,
@@ -360,5 +451,6 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile
 }
