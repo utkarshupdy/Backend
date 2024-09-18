@@ -48,7 +48,7 @@ router.route("/update-account").patch(verifyJWT, updateAccountDetails) // we hav
 
 router.route("/avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar) // we have to verify if user loggedin first , then upload the avatar file first via multer in cloudinary , then call the main fxn updateUserAvatar
 
-router.route("/cover-image").patch(verifyJWT, upload.single("/coverImage"), updateUserCoverImage)
+router.route("/cover-image").patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage)
 
 // for getting user details , we fetch it from params , nd call it as username , so we have to put route as username only
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile) // we r using params , so anything writtem after colon(:) is considered as route
