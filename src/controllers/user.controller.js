@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js"  // to check if user exist or not
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -442,6 +443,71 @@ const getUserChannelProfile = asyncHandler(async(req , res)=>{
 
 })
 
+const getWatchHistory = asyncHandler(async(req , res)=>{
+    // req.user._id // after using this , we dont get mongo db id , we get a object id string "22j2njn v vjufnfnnff" of this type , to get mongodb id , we need to pass this whole object id , but we r using moongoose , which automatically convert this object id into mongodb id while using findbyid , find or such type of fxn
+    // so req.user._id gives us a object string only , ehich converted into mongodb id via mongoose
+    const user = await User.aggregate([
+        {
+            $match:{
+                // _id :  req.user._id // this is wrong , in aggregation pipeline , mongoose doesnot work nd it goes directly , so we need to convert it into mongodb id
+                _id : new mongoose.Types.ObjectId(req.user._id) // mwthod to convert string into mongodb object id
+            }
+        },
+        {// lookup for getting watch history from user 
+            $lookup:{
+                from: "videos",
+                localField: "watchHistory",
+                foreignField:"_id",
+                as: "watchHistory",
+                pipeline:[   // this is method for using nested pipeline through u can go deep down into the tables ... ex : for getting watch history of user , we are inside user from where we go to videos from where we goes to owner (which again a user)
+                    {
+                        $lookup:{ // this subpipeline populate only limited info of owner to the watchHistory document
+                            from: "users",
+                            localField : "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline:[ // we dont have to give all info of owner to the video section , we only have to give limited info of owner user , so use project pipeline inside it
+                                    {
+                                        $project:{
+                                            fullName : 1,
+                                            username: 1,
+                                            avatar: 1
+                                        }
+                                    }
+
+                            ]
+                        }
+
+                    },
+                    {  // there is as such no need of this , we r just destructuring the format ... as after this lookup , we get a owner array .. whose 0th index gives all details of owner like full name , username , etc...
+                        $addFields:{
+                            owner : {
+                                $first : "$owner"  // by doing this , in frontend , we get a object owner , from which after performing dot , he get all owner data
+                                // also $first denites the zero th index or 1st elleemt of owner array , nd we r using owner as addfeild to override entrier owner array givrs from lookup to simple single object
+                            }
+                        }
+
+                    }
+                    
+                ]
+            }
+        }
+
+
+
+    ])
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200 , 
+            user[0].watchHistory ,
+            "Watch History fetched successfully"
+        )
+    )
+})
+
 export {
     registerUser,
     loginUser,
@@ -452,5 +518,6 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory,
 }
