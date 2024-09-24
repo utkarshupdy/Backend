@@ -174,9 +174,9 @@ const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {        //this is mongodb operater which is used to particular value of particular key of user 
-                refreshToken: undefined
-            }
+            $unset: {        //this is mongodb operater which is used to particular value of particular key of user 
+                refreshToken: 1 // this remove the feild from document
+            }         // in unset , basically pass a flag to which variable , u want to unset , simple ...
 
         },
         {
